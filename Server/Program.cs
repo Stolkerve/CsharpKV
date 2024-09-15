@@ -13,20 +13,29 @@ class Server {
 
             while (true) {
                 var client = await listener.AcceptTcpClientAsync();
-                Byte[] buffer = new Byte[1024];
 
-                var stream = client.GetStream();
-                await stream.ReadAsync(buffer,0,buffer.Length);
-
-                var data = Encoding.ASCII.GetString(buffer);
-
-                Console.WriteLine(data);
-
-                var msg = Encoding.ASCII.GetBytes("PONG");
-                await stream.WriteAsync(msg);
+                _ = this.HandleNewConection(client);
             }
         } catch(SocketException e) {
             Console.WriteLine(e);
+        }
+    }
+
+    async Task HandleNewConection(TcpClient client) {
+        Byte[] buffer = new Byte[1024];
+
+        while (true) {
+            var stream = client.GetStream();
+            if (await stream.ReadAsync(buffer,0,buffer.Length) == 0) {
+                break;
+            }
+
+            var data = Encoding.ASCII.GetString(buffer);
+
+            Console.WriteLine(data);
+
+            var msg = Encoding.ASCII.GetBytes("PONG");
+            await stream.WriteAsync(msg);
         }
     }
 
