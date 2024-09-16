@@ -12,13 +12,11 @@ class Client {
 
         var commandName = args[0];
 
-        var client = new TcpClient("127.0.0.1", 6969);
-        var stream = client.GetStream();
+        byte[] commandBuff;
 
         switch (commandName.ToUpper()) {
         case "PING":
-            var commandPing = CommandEncoder.EncodeCommand(Command.PING, new List<CommandValue>());
-            await stream.WriteAsync(commandPing);
+            commandBuff = CommandEncoder.EncodeCommand(Command.PING, new List<CommandValue>());
             break;
         case "GET":
             if (args.Length < 2) {
@@ -31,11 +29,14 @@ class Client {
                 Console.WriteLine("the key must by a string");
                 return;
             }
+            if (getKey == "null") {
+                Console.WriteLine("the key must by a string");
+                return;
+            }
 
-            var commandGet = CommandEncoder.EncodeCommand(Command.GET, new List<CommandValue>(
+            commandBuff = CommandEncoder.EncodeCommand(Command.GET, new List<CommandValue>(
                 new CommandValue[]{new CommandValue(CommandValueType.STRING, getKey)}
             ));
-            await stream.WriteAsync(commandGet);
             break;
         case "SET":
             if (args.Length < 3) {
@@ -48,17 +49,39 @@ class Client {
                 Console.WriteLine("the key must by a string");
                 return;
             }
+            if (setKey == "null") {
+                Console.WriteLine("the key must by a string");
+                return;
+            }
 
             var value = args[2];
+            CommandValue commandValue;
 
-            var commandSet = CommandEncoder.EncodeCommand(Command.SET, new List<CommandValue>(
-                new CommandValue[]{new CommandValue(CommandValueType.STRING, setKey), new CommandValue(CommandValueType.STRING, value)}
+            if (value.All(char.IsDigit)) {
+                int n;
+                if (!int.TryParse(value, out n)) {
+                    Console.WriteLine("the invalid integer");
+                    return;
+                }
+                commandValue = new CommandValue(CommandValueType.INT, n);
+            } else if (value == "null") {
+                commandValue = new CommandValue(CommandValueType.NULL, "null");
+            } else {
+                commandValue = new CommandValue(CommandValueType.STRING, value);
+            }
+
+            commandBuff = CommandEncoder.EncodeCommand(Command.SET, new List<CommandValue>(
+                new CommandValue[]{new CommandValue(CommandValueType.STRING, setKey), commandValue}
             ));
-            await stream.WriteAsync(commandSet);
             break;
         default:
         return;
         }
+
+        var client = new TcpClient("127.0.0.1", 6969);
+        var stream = client.GetStream();
+
+        await stream.WriteAsync(commandBuff);
 
         var respondSizeBuff = new Byte[4];
         await stream.ReadAsync(respondSizeBuff, 0, respondSizeBuff.Length);
