@@ -64,8 +64,29 @@ class Server {
 
                 switch (commandName) {
                 case "PING":
-                    var respondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "Pong"));
-                    await stream.WriteAsync(respondCommandBuff);
+                    var pongRespondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "Pong"));
+                    await stream.WriteAsync(pongRespondCommandBuff);
+                    break;
+                case "GET":
+                    if (args.Count() != 2) {
+                        var _errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, $"ERROR: expected 1 arguments got {args.Count()}"));
+                        var key = args[1].Value;
+                        await stream.WriteAsync(_errBuff);
+                        return;
+                    }
+                    var getRespondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "Pong"));
+                    await stream.WriteAsync(getRespondCommandBuff);
+                    break;
+                case "SET":
+                    if (args.Count() != 3) {
+                        var key = args[1].Value;
+                        var value = args[2].Value;
+                        var _errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, $"ERROR: expected 2 arguments got {args.Count()}"));
+                        await stream.WriteAsync(_errBuff);
+                        return;
+                    }
+                    var setRespondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "Pong"));
+                    await stream.WriteAsync(setRespondCommandBuff);
                     break;
                 default:
                     var errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ERROR: expected command name as string"));
