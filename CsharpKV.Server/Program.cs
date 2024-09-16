@@ -46,8 +46,9 @@ class Server {
                     await stream.WriteAsync(errBuff);
                     break;
                 }
+                Console.WriteLine($"Argumentos recibidos: {command.ToString()}");
 
-                var args = (List<CommandValue>)command.ValueExtractor!;
+                var args = (List<CommandValue>)command.Value!;
                 var respondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "Pong"));
                 await stream.WriteAsync(respondCommandBuff);
             } catch (Exception e) {

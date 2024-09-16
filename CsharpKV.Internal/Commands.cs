@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace CsharpKV.Internal;
 
@@ -19,7 +18,6 @@ public enum Command {
 
 public class CommandValue {
 	public CommandValue() {
-		
 	}
 	public CommandValue(CommandValueType t, object v) {
 		if (t == CommandValueType.INT && !(v is int)) {
@@ -32,39 +30,45 @@ public class CommandValue {
 		this.Type = t;
 		this.Value = v;
 	}
-	public CommandValueType Type { get; set; }
-	public Object? Value { get;set; }
 
-    [JsonIgnore]
-	public Object? ValueExtractor {
-		get {
-			switch (this.Type) {
-			case CommandValueType.ARRAY:
-				return ((JsonElement)Value!).Deserialize<List<CommandValue>>()!;
-			case CommandValueType.INT:
-				return ((JsonElement)Value!).GetInt32();
-			case CommandValueType.STRING:
-				return ((JsonElement)Value!).GetString();
-			case CommandValueType.NULL:
-				return null;
-			}
-			return null;
-		}
-	}
+	public CommandValueType Type { get; set; }
+
+	public Object? Value { get;set; }
 
 	public override string ToString() {
 		switch (this.Type) {
 		case CommandValueType.ARRAY:
-			var arr = (List<CommandValue>)this.ValueExtractor!;
+			var arr = (List<CommandValue>)this.Value!;
 			return "[" + string.Join(", ",  arr) + "]";
 		case CommandValueType.INT:
-			return ((int)this.ValueExtractor!).ToString();
+			return ((int)this.Value!).ToString();
 		case CommandValueType.STRING:
-			return (string)this.ValueExtractor!;
+			return (string)this.Value!;
 		case CommandValueType.NULL:
 			return "null";
 		}
 		return "";
+	}
+
+	public static void CastJsonTypesToNormalTypes (CommandValue c)  {
+			switch (c.Type) {
+			case CommandValueType.ARRAY:
+				c.Value = ((JsonElement)c.Value!).Deserialize<List<CommandValue>>()!;
+				var value = (List<CommandValue>)c.Value; 
+				for (int i = 0; i < value.Count(); i++) {
+					CastJsonTypesToNormalTypes(value[i]);
+				}
+				break;
+			case CommandValueType.INT:
+				c.Value = ((JsonElement)c.Value!).GetInt32();
+				break;
+			case CommandValueType.STRING:
+				c.Value =((JsonElement)c.Value!).GetString();
+				break;
+			case CommandValueType.NULL:
+				c.Value = null;
+				break;
+			}
 	}
 }
 
@@ -130,6 +134,31 @@ public class CommandEncoder
 	}
 
 	public static CommandValue DecodeCommand(byte[] buff) {
-		return JsonSerializer.Deserialize<CommandValue>(buff)!;
+		var cmd = JsonSerializer.Deserialize<CommandValue>(buff)!;
+
+		var castJsonTypesToNormalTypes = (CommandValue c) => {
+			switch (c.Type) {
+			case CommandValueType.ARRAY:
+				c.Value = ((JsonElement)c.Value!).Deserialize<List<CommandValue>>()!;
+				var value = (List<CommandValue>)c.Value; 
+				for (int i = 0; i < value.Count(); i++) {
+					CommandValue.CastJsonTypesToNormalTypes(value[i]);
+				}
+				break;
+			case CommandValueType.INT:
+				c.Value = ((JsonElement)c.Value!).GetInt32();
+				break;
+			case CommandValueType.STRING:
+				c.Value =((JsonElement)c.Value!).GetString();
+				break;
+			case CommandValueType.NULL:
+				c.Value = null;
+				break;
+			}
+		}; 
+
+		castJsonTypesToNormalTypes(cmd);
+
+		return cmd;
 	}
 }

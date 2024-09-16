@@ -9,7 +9,6 @@ class Client {
         var stream = client.GetStream();
 
         var command = CommandEncoder.EncodeCommand(Command.PING, new List<CommandValue>());
-		Console.WriteLine(command[0]);
         await stream.WriteAsync(command);
 
         var respondSizeBuff = new Byte[4];
