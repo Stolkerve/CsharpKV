@@ -1,7 +1,7 @@
 ﻿using System.Net.Sockets;
 using System.Text;
 
-namespace Client;
+namespace CsharpKV.Client;
 
 class Client {
     public async Task Start() {

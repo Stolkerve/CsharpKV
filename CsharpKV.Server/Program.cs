@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using System.Text;
 
-namespace Server;
+namespace CsharpKV.Server;
 
 class Server {
     public async Task Start() {
@@ -40,6 +40,7 @@ class Server {
     }
 
 }
+
 
 class Program
 {

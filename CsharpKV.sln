@@ -3,6 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsharpKV.Server", "CsharpKV.Server\CsharpKV.Server.csproj", "{6EC5198A-1CB2-4181-8503-38058F41D72D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsharpKV.Client", "CsharpKV.Client\CsharpKV.Client.csproj", "{C0CA7DD3-33FA-4E36-BD4B-D7A838783172}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsharpKV.Internal", "CsharpKV.Internal\CsharpKV.Internal.csproj", "{FDC06D35-1DCB-444E-B597-F837C8B8CC8E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -10,5 +16,19 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6EC5198A-1CB2-4181-8503-38058F41D72D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EC5198A-1CB2-4181-8503-38058F41D72D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EC5198A-1CB2-4181-8503-38058F41D72D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EC5198A-1CB2-4181-8503-38058F41D72D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0CA7DD3-33FA-4E36-BD4B-D7A838783172}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0CA7DD3-33FA-4E36-BD4B-D7A838783172}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0CA7DD3-33FA-4E36-BD4B-D7A838783172}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0CA7DD3-33FA-4E36-BD4B-D7A838783172}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDC06D35-1DCB-444E-B597-F837C8B8CC8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDC06D35-1DCB-444E-B597-F837C8B8CC8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDC06D35-1DCB-444E-B597-F837C8B8CC8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDC06D35-1DCB-444E-B597-F837C8B8CC8E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
