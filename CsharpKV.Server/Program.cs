@@ -17,7 +17,7 @@ class Server {
                 _ = this.HandleNewConection(client);
             }
         } catch(Exception e) {
-            Console.WriteLine("Execp: ", e.ToString());
+            Console.WriteLine(e.ToString());
         }
     }
 
@@ -44,13 +44,35 @@ class Server {
                     Console.WriteLine($"Cliente {client.Client.RemoteEndPoint} se desconecto");
                     var errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ERROR: expected array"));
                     await stream.WriteAsync(errBuff);
-                    break;
+                    return;
                 }
                 Console.WriteLine($"Argumentos recibidos: {command.ToString()}");
 
                 var args = (List<CommandValue>)command.Value!;
-                var respondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "Pong"));
-                await stream.WriteAsync(respondCommandBuff);
+                if (args.Count() == 0) {
+                    var errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ERROR: expected array"));
+                    await stream.WriteAsync(errBuff);
+                    return;
+                }
+
+                if (args[0].Type != CommandValueType.STRING) {
+                    var errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ERROR: expected command name as string"));
+                    await stream.WriteAsync(errBuff);
+                    return;
+                }
+                var commandName = (string)args[0].Value!;
+
+                switch (commandName) {
+                case "PING":
+                    var respondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "Pong"));
+                    await stream.WriteAsync(respondCommandBuff);
+                    break;
+                default:
+                    var errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ERROR: expected command name as string"));
+                    await stream.WriteAsync(errBuff);
+                    return;
+                }
+
             } catch (Exception e) {
                 Console.WriteLine(e);
                 return;
