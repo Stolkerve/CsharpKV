@@ -1,6 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using System.Text;
+using CsharpKV.Internal;
 
 namespace CsharpKV.Server;
 
@@ -16,26 +16,44 @@ class Server {
 
                 _ = this.HandleNewConection(client);
             }
-        } catch(SocketException e) {
-            Console.WriteLine(e);
+        } catch(Exception e) {
+            Console.WriteLine("Execp: ", e.ToString());
         }
     }
 
     async Task HandleNewConection(TcpClient client) {
-        Byte[] buffer = new Byte[1024];
-
+        Byte[] commandSizeBuffer = new Byte[4];
+        Console.WriteLine($"Nueva coneccion desde: {client.Client.RemoteEndPoint}");
+        var stream = client.GetStream();
         while (true) {
-            var stream = client.GetStream();
-            if (await stream.ReadAsync(buffer,0,buffer.Length) == 0) {
-                break;
+            for (int i = 0; i < commandSizeBuffer.Length; i++) {
+                commandSizeBuffer[i] = 0;
             }
+            stream.ReadTimeout = 1000;
+            if (await stream.ReadAsync(commandSizeBuffer,0,commandSizeBuffer.Length) == 0) {
+                return;
+            }
+            var commandSize = CommandEncoder.DecodeLittleEndian(commandSizeBuffer);
+            var commandBuff = new byte[commandSize];
+            if (await stream.ReadAsync(commandBuff,0,commandBuff.Length) == 0) {
+                return;
+            }
+            try {
+                CommandValue command = CommandEncoder.DecodeCommand(commandBuff);
+                if (command.Type != CommandValueType.ARRAY) {
+                    Console.WriteLine($"Cliente {client.Client.RemoteEndPoint} se desconecto");
+                    var errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ERROR: expected array"));
+                    await stream.WriteAsync(errBuff);
+                    break;
+                }
 
-            var data = Encoding.ASCII.GetString(buffer);
-
-            Console.WriteLine(data);
-
-            var msg = Encoding.ASCII.GetBytes("PONG");
-            await stream.WriteAsync(msg);
+                var args = (List<CommandValue>)command.ValueExtractor!;
+                var respondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "Pong"));
+                await stream.WriteAsync(respondCommandBuff);
+            } catch (Exception e) {
+                Console.WriteLine(e);
+                return;
+            }
         }
     }
 

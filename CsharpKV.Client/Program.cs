@@ -1,5 +1,5 @@
 ﻿using System.Net.Sockets;
-using System.Text;
+using CsharpKV.Internal;
 
 namespace CsharpKV.Client;
 
@@ -7,14 +7,21 @@ class Client {
     public async Task Start() {
         var client = new TcpClient("127.0.0.1", 6969);
         var stream = client.GetStream();
-        var msg = Encoding.ASCII.GetBytes("PING");
-        await stream.WriteAsync(msg);
 
-        var readBuff = new Byte[1024];
-        await stream.ReadAsync(readBuff, 0, readBuff.Length);
-        var data = Encoding.ASCII.GetString(readBuff);
+        var command = CommandEncoder.EncodeCommand(Command.PING, new List<CommandValue>());
+		Console.WriteLine(command[0]);
+        await stream.WriteAsync(command);
 
-        Console.WriteLine(data);
+        var respondSizeBuff = new Byte[4];
+        await stream.ReadAsync(respondSizeBuff, 0, respondSizeBuff.Length);
+        var respondSize = CommandEncoder.DecodeLittleEndian(respondSizeBuff);
+        var respondBuff = new byte[respondSize];
+        await stream.ReadAsync(respondBuff);
+
+        var respond = CommandEncoder.DecodeCommand(respondBuff);
+        if (respond != null) {
+            Console.WriteLine(respond.ToString());
+        }
     }
 }
 
