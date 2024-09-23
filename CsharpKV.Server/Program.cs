@@ -1,10 +1,13 @@
 ﻿using System.Net;
+using System.Collections.Concurrent;
 using System.Net.Sockets;
 using CsharpKV.Internal;
 
 namespace CsharpKV.Server;
 
 class Server {
+    ConcurrentDictionary<string, CommandValue> Cache = new();
+
     public async Task Start() {
         try {
             
@@ -46,7 +49,7 @@ class Server {
                     await stream.WriteAsync(errBuff);
                     return;
                 }
-                Console.WriteLine($"Argumentos recibidos: {command.ToString()}");
+                // Console.WriteLine($"Argumentos recibidos: {command.ToString()}");
 
                 var args = (List<CommandValue>)command.Value!;
                 if (args.Count() == 0) {
@@ -70,22 +73,31 @@ class Server {
                 case "GET":
                     if (args.Count() != 2) {
                         var _errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, $"ERROR: expected 1 arguments got {args.Count()}"));
-                        var key = args[1].Value;
                         await stream.WriteAsync(_errBuff);
                         return;
                     }
-                    var getRespondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "Pong"));
-                    await stream.WriteAsync(getRespondCommandBuff);
+                    if (args[1].Type != CommandValueType.STRING) {
+                    }
+                    var getKeyStr = (String)args[1].Value!;
+                    CommandValue value;
+                    if (Cache.TryGetValue(getKeyStr, out value!)) {
+                        var getRespondCommandBuff = CommandEncoder.EncodeCommandValue(value);
+                        await stream.WriteAsync(getRespondCommandBuff);
+                    }
+                    await stream.WriteAsync(CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.NULL, "null")));
                     break;
                 case "SET":
                     if (args.Count() != 3) {
-                        var key = args[1].Value;
-                        var value = args[2].Value;
                         var _errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, $"ERROR: expected 2 arguments got {args.Count()}"));
                         await stream.WriteAsync(_errBuff);
                         return;
                     }
-                    var setRespondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "Pong"));
+                    if (args[1].Type != CommandValueType.STRING) {
+                    }
+                    var setKeyStr = (String)args[1].Value!;
+                    var setValue = args[2];
+                    Cache[setKeyStr] = setValue;
+                    var setRespondCommandBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ok"));
                     await stream.WriteAsync(setRespondCommandBuff);
                     break;
                 default:
