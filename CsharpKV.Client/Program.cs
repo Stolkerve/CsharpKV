@@ -90,9 +90,7 @@ class Client {
         await stream.ReadAsync(respondBuff);
 
         var respond = CommandEncoder.DecodeCommand(respondBuff);
-        if (respond != null) {
-            Console.WriteLine(respond.ToString());
-        }
+        Console.WriteLine(respond.ToString());
     }
 }
 

@@ -24,6 +24,11 @@ class Server {
         }
     }
 
+    async Task SendErrMsg(NetworkStream stream, string msg) {
+        var _errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, $"ERROR: {msg}"));
+        await stream.WriteAsync(_errBuff);
+    }
+
     async Task HandleNewConection(TcpClient client) {
         Byte[] commandSizeBuffer = new Byte[4];
         Console.WriteLine($"Nueva coneccion desde: {client.Client.RemoteEndPoint}");
@@ -45,22 +50,19 @@ class Server {
                 CommandValue command = CommandEncoder.DecodeCommand(commandBuff);
                 if (command.Type != CommandValueType.ARRAY) {
                     Console.WriteLine($"Cliente {client.Client.RemoteEndPoint} se desconecto");
-                    var errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ERROR: expected array"));
-                    await stream.WriteAsync(errBuff);
+                    await SendErrMsg(stream, "expected array");
                     return;
                 }
                 // Console.WriteLine($"Argumentos recibidos: {command.ToString()}");
 
                 var args = (List<CommandValue>)command.Value!;
                 if (args.Count() == 0) {
-                    var errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ERROR: expected array"));
-                    await stream.WriteAsync(errBuff);
+                    await SendErrMsg(stream, "expected array with arguments");
                     return;
                 }
 
                 if (args[0].Type != CommandValueType.STRING) {
-                    var errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ERROR: expected command name as string"));
-                    await stream.WriteAsync(errBuff);
+                    await SendErrMsg(stream, "expected command name as string");
                     return;
                 }
                 var commandName = (string)args[0].Value!;
@@ -72,11 +74,12 @@ class Server {
                     break;
                 case "GET":
                     if (args.Count() != 2) {
-                        var _errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, $"ERROR: expected 1 arguments got {args.Count()}"));
-                        await stream.WriteAsync(_errBuff);
+                        await SendErrMsg(stream, $"expected 1 arguments got {args.Count()}");
                         return;
                     }
                     if (args[1].Type != CommandValueType.STRING) {
+                        await SendErrMsg(stream, "expected key argument as string");
+                        return;
                     }
                     var getKeyStr = (String)args[1].Value!;
                     CommandValue value;
@@ -88,11 +91,12 @@ class Server {
                     break;
                 case "SET":
                     if (args.Count() != 3) {
-                        var _errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, $"ERROR: expected 2 arguments got {args.Count()}"));
-                        await stream.WriteAsync(_errBuff);
+                        await SendErrMsg(stream, $"expected 2 arguments got {args.Count()}");
                         return;
                     }
                     if (args[1].Type != CommandValueType.STRING) {
+                        await SendErrMsg(stream, "expected key argument as string");
+                        return;
                     }
                     var setKeyStr = (String)args[1].Value!;
                     var setValue = args[2];
@@ -101,8 +105,7 @@ class Server {
                     await stream.WriteAsync(setRespondCommandBuff);
                     break;
                 default:
-                    var errBuff = CommandEncoder.EncodeCommandValue(new CommandValue(CommandValueType.STRING, "ERROR: expected command name as string"));
-                    await stream.WriteAsync(errBuff);
+                    await SendErrMsg(stream, $"invalid command {commandName}");
                     return;
                 }
 
